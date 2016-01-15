@@ -12,5 +12,8 @@ Attitude = namedtuple('Attitude', ['pitch', 'yaw', 'roll'])
 # horizontal and vertical speed (in meters/second) w.r.t. Earth frame
 Speed = namedtuple('Speed', ['h', 'v'])
 
-# current throttle level, should be between 0 and 1
+# current throttle level, should be between 0 .. 1
 Throttle = namedtuple('Throttle', ['all'])
+
+# control inputs, should be -1 .. 1
+Control = namedtuple('Control', ['elevator', 'aileron', 'rudder'])

@@ -2,19 +2,21 @@ from control import state
 import struct
 
 DATA_FORMAT = "<I8f"
+DATA_HEADER_FORMAT = "<4cB"
 DATA_LEN = 36
 DATA_OFFSET = 5
 
 XPLANE_LOCATION_INDEX = 20
 XPLANE_ATTITUDE_INDEX = 17
+XPLANE_CONTROL_INDEX = 11
 
 
-def to_state(data):
-    parsed = parse_data(data)
-    return to_location(parsed), to_attitude(parsed)
+def parse_state(data):
+    parsed = parse_raw(data)
+    return _get_location(parsed), _get_attitude(parsed)
 
 
-def parse_data(data):
+def parse_raw(data):
     sliced = [data[x:x + DATA_LEN] for x in range(DATA_OFFSET, len(data), DATA_LEN)]
     parsed = [struct.unpack(DATA_FORMAT, x) for x in sliced]
 
@@ -22,30 +24,39 @@ def parse_data(data):
     return dict(map(lambda t: (t[0], t[1:]), parsed))
 
 
-def to_location(parsed_map):
-    raw_location = get_raw_data(parsed_map, XPLANE_LOCATION_INDEX)
+def from_input(control):
+    header = struct.pack(DATA_HEADER_FORMAT, "D", "A", "T", "A", 0)
+    # XPlane Rudder input is between 0 .. 0.2, so we scale down elevator input
+    raw_data = _to_raw_data(XPLANE_CONTROL_INDEX, control.elevator, control.aileron, (control.rudder / 5))
+    data = struct.pack(DATA_FORMAT, *raw_data)
+    return header + data
+
+
+def _to_raw_data(index, *data_points):
+    data_len = len(data_points)
+    if data_len > 8:
+        raise ValueError("tuple should have at most 8 values")
+    return [index] + [data_points[x] if x < data_len else -999 for x in range(0, 8)]
+
+
+def _get_location(parsed_map):
+    raw_location = parsed_map.get(XPLANE_LOCATION_INDEX, None)
     if raw_location is None:
         return None
 
-    return state.Location(raw_location[0], raw_location[1], to_meter(raw_location[2]))
+    return state.Location(raw_location[0], raw_location[1], _convert_meter(raw_location[2]))
 
 
-def to_attitude(parsed_map):
-    raw_attitude = get_raw_data(parsed_map, XPLANE_ATTITUDE_INDEX)
+def _get_attitude(parsed_map):
+    raw_attitude = parsed_map.get(XPLANE_ATTITUDE_INDEX, None)
     if raw_attitude is None:
         return None
 
     return state.Attitude(raw_attitude[0], raw_attitude[2], raw_attitude[1])
 
 
-def get_raw_data(parsed_map, index):
-    if index in parsed_map:
-        return parsed_map[index]
-    return None
-
-
 '''
     TODO: Find & use a module for unit conversions
 '''
-def to_meter(foot):
+def _convert_meter(foot):
     return foot * .305
