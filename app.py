@@ -13,13 +13,14 @@ if __name__ == '__main__':
     sock.bind((UDP_IP, UDP_PORT))
 
     auto = ap.Ap()
-
+    start = time.time()
     while True:
         data, addr = sock.recvfrom(1024)  # buffer size is 1024 bytes
         loc, att = parser.parse_state(data)
-        control = auto.level_wing(att)
-        print att
-        print control
+        now = time.time()
+        control = auto.level_wing(att, now - start)
+        print "%s %s" % (att, control)
+        start = now
         sock.sendto(parser.from_input(control), (UDP_IP, 49000))
     '''
     data_file = open("./test-vectors/11_17_19_20.bin")
