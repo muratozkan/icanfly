@@ -25,7 +25,7 @@ def parse_raw(data):
 
 
 def from_input(control):
-    header = struct.pack(DATA_HEADER_FORMAT, "D", "A", "T", "A", 0)
+    header = struct.pack(DATA_HEADER_FORMAT, b"D", b"A", b"T", b"A", 0)
     # XPlane Rudder input is between 0 .. 0.2, so we scale down elevator input
     raw_data = _to_raw_data(XPLANE_CONTROL_INDEX, control.elevator, control.aileron, (control.rudder / 5))
     data = struct.pack(DATA_FORMAT, *raw_data)

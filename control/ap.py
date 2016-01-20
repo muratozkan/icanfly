@@ -1,7 +1,9 @@
-import pid
-import state
 import time
 import operator
+from functools import reduce
+
+from control.pid import Pid
+from control.state import Control
 
 
 class Ap:
@@ -15,10 +17,12 @@ class Ap:
         self._last_update = None
 
     def level_wing(self, enabled):
-        self._init_pid('wing_level', enabled, pid.Pid(0.005, 0.01, 0.01), lambda a: 0 - a.roll, lambda x: state.Control(0, x, 0))
+        self._init_pid('wing_level', enabled, Pid(0.008, 0.005, 0.0033, -0.4, 0.4),
+                       lambda a: 0 - a.roll, lambda x: Control(0, x, 0))
 
     def pitch_angle(self, enabled):
-        self._init_pid('pitch_angle', enabled, pid.Pid(1, 1, 1), lambda a: 0 - a.pitch, lambda x: state.Control(x, 0, 0))
+        self._init_pid('pitch_angle', enabled, Pid(0.1, 0.01, 0.01, -0.5, 0.5),
+                       lambda a: 0 - a.pitch, lambda x: Control(x, 0, 0))
 
     def update(self, attitude):
         delta_t = 0.00001       # a very small initial value, for the first iteration
@@ -29,8 +33,8 @@ class Ap:
         if len(self._ap_table) == 0:
             return None
 
-        controls = map(lambda (k, p): p[2](p[0].update(p[1](attitude), delta_t)), self._ap_table.items())
-        return state.Control(*reduce(lambda x, y: map(operator.add, x, y), controls))
+        controls = [r(p.update(t(attitude), delta_t)) for p, t, r in self._ap_table.values()]
+        return Control(*reduce(lambda x, y: map(operator.add, x, y), controls))
 
     def reset(self):
         for k, p in self._ap_table:
