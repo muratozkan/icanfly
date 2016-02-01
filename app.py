@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import socket
+from IN import AF_INET, SOCK_DGRAM
 
 from control import ap
 from xplane import parser
@@ -18,7 +19,7 @@ class UdpClient:
         self.command_socket = None
 
     def connection_made(self, transport):
-        self.command_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.command_socket = socket.socket(AF_INET, SOCK_DGRAM)
         pass
 
     def datagram_received(self, data, addr):

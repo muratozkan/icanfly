@@ -21,7 +21,7 @@ class Ap:
                        lambda a: 0 - a.roll, lambda x: Control(0, x, 0))
 
     def pitch_angle(self, enabled):
-        self._init_pid('pitch_angle', enabled, Pid(0.1, 0.01, 0.01, -0.5, 0.5),
+        self._init_pid('pitch_angle', enabled, Pid(0.1, 0, 0.01, -0.5, 0.5),
                        lambda a: 0 - a.pitch, lambda x: Control(x, 0, 0))
 
     def update(self, attitude):
@@ -37,8 +37,8 @@ class Ap:
         return Control(*reduce(lambda x, y: map(operator.add, x, y), controls))
 
     def reset(self):
-        for k, p in self._ap_table:
-            p[0].reset()
+        for p, t, r in self._ap_table.values():
+            p.reset()
         self._last_update = None
 
     def _init_pid(self, key, enabled, pid, target_func, control_func):
