@@ -2,8 +2,8 @@ from collections import namedtuple
 
 # These structures define the state of the craft, usually acquired through on-board sensors.
 
-# lat, lon in degrees, alt (from mean sea level - msl) in meters
-Location = namedtuple('Location', ['lat', 'lon', 'alt'])
+# lat, lon in degrees, alt (from mean sea level - msl and above ground level - agl) in meters
+Location = namedtuple('Location', ['lat', 'lon', 'alt_msl', 'alt_agl'])
 
 # degrees, w.r.t. body frame
 # For reference, see: https://en.wikipedia.org/wiki/Flight_dynamics_(fixed-wing_aircraft)

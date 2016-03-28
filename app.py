@@ -1,36 +1,35 @@
 #!/usr/bin/env python
-import socket
-from IN import AF_INET, SOCK_DGRAM
+
+from multiprocessing import Process, Queue
 
 from control import ap
-from xplane import parser
-import asyncio
+from xplane import xplane
 
-UDP_IP = "127.0.0.1"
-UDP_PORT = 49010
+auto = ap.Ap()
+auto.level_wing(True)
+auto.pitch_angle(True)
 
 
-class UdpClient:
-    def __init__(self):
-        auto = ap.Ap()
-        auto.level_wing(True)
-        auto.pitch_angle(True)
-        self.auto = auto
-        self.command_socket = None
+class Config(object):
+    pass
 
-    def connection_made(self, transport):
-        self.command_socket = socket.socket(AF_INET, SOCK_DGRAM)
-        pass
 
-    def datagram_received(self, data, addr):
-        loc, att = parser.parse_state(data)
-        control_out = self.auto.update(att)
-        print(att, control_out)
-        if control_out is not None:
-            self.command_socket.sendto(parser.from_input(control_out), (UDP_IP, 49000))
+def ap_worker(queue):
+    while True:
+        att = queue.get()
+        control_out = auto.update(att)
+        queue.put(control_out)
+
 
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    client_coro = loop.create_datagram_endpoint(UdpClient, local_addr=(UDP_IP, UDP_PORT))
-    loop.run_until_complete(client_coro)
-    loop.run_forever()
+    ap_queue = Queue()
+    config = Config()
+    config.udp_ip = "127.0.0.1"
+    config.udp_port = 49010
+    config.xp_port = 49000
+
+    fc_proc = Process(target=ap_worker, args=(ap_queue,))
+    fc_proc.start()
+
+    client_proc = Process(target=xplane.run, args=(config, ap_queue))
+    client_proc.start()

@@ -6,9 +6,9 @@ DATA_HEADER_FORMAT = "<4cB"
 DATA_LEN = 36
 DATA_OFFSET = 5
 
-XPLANE_LOCATION_INDEX = 20
-XPLANE_ATTITUDE_INDEX = 17
-XPLANE_CONTROL_INDEX = 11
+XP_LOCATION_INDEX = 20
+XP_ATTITUDE_INDEX = 17
+XP_CONTROL_INDEX = 11
 
 
 def parse_state(data):
@@ -27,7 +27,7 @@ def parse_raw(data):
 def from_input(control):
     header = struct.pack(DATA_HEADER_FORMAT, b"D", b"A", b"T", b"A", 0)
     # XPlane Rudder input is between 0 .. 0.2, so we scale down elevator input
-    raw_data = _to_raw_data(XPLANE_CONTROL_INDEX, control.elevator, control.aileron, (control.rudder / 5))
+    raw_data = _to_raw_data(XP_CONTROL_INDEX, control.elevator, control.aileron, (control.rudder / 5))
     data = struct.pack(DATA_FORMAT, *raw_data)
     return header + data
 
@@ -40,15 +40,16 @@ def _to_raw_data(index, *data_points):
 
 
 def _get_location(parsed_map):
-    raw_location = parsed_map.get(XPLANE_LOCATION_INDEX, None)
+    raw_location = parsed_map.get(XP_LOCATION_INDEX, None)
     if raw_location is None:
         return None
 
-    return state.Location(raw_location[0], raw_location[1], _convert_meter(raw_location[2]))
+    return state.Location(raw_location[0], raw_location[1],
+                          _convert_meter(raw_location[2]),_convert_meter(raw_location[3]))
 
 
 def _get_attitude(parsed_map):
-    raw_attitude = parsed_map.get(XPLANE_ATTITUDE_INDEX, None)
+    raw_attitude = parsed_map.get(XP_ATTITUDE_INDEX, None)
     if raw_attitude is None:
         return None
 
