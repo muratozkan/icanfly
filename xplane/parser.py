@@ -56,8 +56,6 @@ def _get_attitude(parsed_map):
     return state.Attitude(raw_attitude[0], raw_attitude[2], raw_attitude[1])
 
 
-'''
-    TODO: Find & use a module for unit conversions
-'''
+# TODO: Find & use a module for unit conversions
 def _convert_meter(foot):
     return foot * .305
